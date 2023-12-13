@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId "com.pmntm.nhom4.facemeshdetection"
-        minSdkVersion 21
+        minSdkVersion 24
         multiDexEnabled true
         targetSdkVersion 34
 

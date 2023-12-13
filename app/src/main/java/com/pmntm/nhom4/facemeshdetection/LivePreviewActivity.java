@@ -31,6 +31,8 @@ import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.common.annotation.KeepName;
 
+import com.pmntm.nhom4.facemeshdetection.db.Face;
+import com.pmntm.nhom4.facemeshdetection.db.FaceHandler;
 import com.pmntm.nhom4.facemeshdetection.facemeshdetector.FaceMeshDetectorProcessor;
 
 import java.io.IOException;
@@ -49,6 +51,8 @@ public final class LivePreviewActivity extends AppCompatActivity {
   private CameraSourcePreview preview;
   private GraphicOverlay graphicOverlay;
   private String selectedModel = FACE_MESH_DETECTION;
+
+  private FaceHandler faceHandler;
 
   private static final String[] REQUIRED_RUNTIME_PERMISSIONS = {
           Manifest.permission.CAMERA,
@@ -77,6 +81,10 @@ public final class LivePreviewActivity extends AppCompatActivity {
       getRuntimePermissions();
     }
 
+    faceHandler = new FaceHandler(this);
+    faceHandler.addFace(new Face("dat", 1.4283505765701627, 0.029274422068446236, 3.513794466702038, 0.02505434568330515));
+    faceHandler.addFace(new Face("elon musk", 1.3241561428033954, 0.05410470886188243, 3.600446506990943, 0.04235797584950561));
+
     createCameraSource(selectedModel);
   }
 
@@ -89,7 +97,7 @@ public final class LivePreviewActivity extends AppCompatActivity {
     try {
       switch (model) {
         case FACE_MESH_DETECTION:
-          cameraSource.setMachineLearningFrameProcessor(new FaceMeshDetectorProcessor(this));
+          cameraSource.setMachineLearningFrameProcessor(new FaceMeshDetectorProcessor(this, faceHandler));
           break;
         default:
           Log.e(TAG, "Unknown model: " + model);
