@@ -17,11 +17,15 @@
 package com.pmntm.nhom4.facemeshdetection;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -54,6 +58,8 @@ public final class LivePreviewActivity extends AppCompatActivity {
 
   private FaceHandler faceHandler;
 
+  private Button btn_new;
+
   private static final String[] REQUIRED_RUNTIME_PERMISSIONS = {
           Manifest.permission.CAMERA,
           Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -61,6 +67,7 @@ public final class LivePreviewActivity extends AppCompatActivity {
   };
   private static final int PERMISSION_REQUESTS = 1;
 
+  @SuppressLint("MissingInflatedId")
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -86,6 +93,17 @@ public final class LivePreviewActivity extends AppCompatActivity {
     faceHandler.addFace(new Face("elon musk", 1.3241561428033954, 0.05410470886188243, 3.600446506990943, 0.04235797584950561));
 
     createCameraSource(selectedModel);
+
+    btn_new = findViewById(R.id.btn_new);
+    btn_new.setOnClickListener(new View.OnClickListener() {
+      public void onClick(View v) {
+        Log.d("BUTTONS", "Clicked button New");
+//        setContentView(R.layout.activity_new_face);
+//        setContentView(R.layout.activity_second);
+        startActivity(new Intent(LivePreviewActivity.this, NewFaceActivity.class));
+
+      }
+    });
   }
 
   private void createCameraSource(String model) {

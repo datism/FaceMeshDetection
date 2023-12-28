@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">FaceMeshDetection</string>
+    <string name="btn_new">+ New Face</string>
+    <string name="back">Back</string>
+    <string name="type_name">Type name ...</string>
+    <string name="ok">OK</string>
 </resources>
