@@ -4,20 +4,30 @@ public class Face {
   String name;
   Double edwRatio;
   Double edwRatioVariance;
-  Double nfRatio;
-  Double nfRatioVariance;
+  Double nfhRatio;
+  Double nfhRatioVariance;
+  Double nfwRatio;
+  Double nfwRatioVariance;
+  Double lfhRatio;
+  Double lfhRatioVariance;
 
-  public Face(String name, Double edwRatio, Double edwRatioVariance, Double nfRatio, Double nfRatioVariance) {
+  public Face(Double edwRatio, Double nfhRatio, Double nfwRatio, Double lfhRatio) {
+    this.edwRatio = edwRatio;
+    this.nfhRatio = nfhRatio;
+    this.nfwRatio = nfwRatio;
+    this.lfhRatio = lfhRatio;
+  }
+
+  public Face(String name, Double edwRatio, Double edwRatioVariance, Double nfhRatio, Double nfhRatioVariance, Double nfwRatio, Double nfwRatioVariance, Double lfhRatio, Double lfhRatioVariance) {
     this.name = name;
     this.edwRatio = edwRatio;
     this.edwRatioVariance = edwRatioVariance;
-    this.nfRatio = nfRatio;
-    this.nfRatioVariance = nfRatioVariance;
-  }
-
-  public Face(Double edwRatio, Double nfRatio) {
-    this.edwRatio = edwRatio;
-    this.nfRatio = nfRatio;
+    this.nfhRatio = nfhRatio;
+    this.nfhRatioVariance = nfhRatioVariance;
+    this.nfwRatio = nfwRatio;
+    this.nfwRatioVariance = nfwRatioVariance;
+    this.lfhRatio = lfhRatio;
+    this.lfhRatioVariance = lfhRatioVariance;
   }
 
   public String getName() {
@@ -44,30 +54,66 @@ public class Face {
     this.edwRatioVariance = edwRatioVariance;
   }
 
-  public Double getNfRatio() {
-    return nfRatio;
+  public Double getNfhRatio() {
+    return nfhRatio;
   }
 
-  public void setNfRatio(Double nfRatio) {
-    this.nfRatio = nfRatio;
+  public void setNfhRatio(Double nfhRatio) {
+    this.nfhRatio = nfhRatio;
   }
 
-  public Double getNfRatioVariance() {
-    return nfRatioVariance;
+  public Double getNfhRatioVariance() {
+    return nfhRatioVariance;
   }
 
-  public void setNfRatioVariance(Double nfRatioVariance) {
-    this.nfRatioVariance = nfRatioVariance;
+  public void setNfhRatioVariance(Double nfhRatioVariance) {
+    this.nfhRatioVariance = nfhRatioVariance;
+  }
+
+  public Double getNfwRatio() {
+    return nfwRatio;
+  }
+
+  public void setNfwRatio(Double nfwRatio) {
+    this.nfwRatio = nfwRatio;
+  }
+
+  public Double getNfwRatioVariance() {
+    return nfwRatioVariance;
+  }
+
+  public void setNfwRatioVariance(Double nfwRatioVariance) {
+    this.nfwRatioVariance = nfwRatioVariance;
+  }
+
+  public Double getLfhRatio() {
+    return lfhRatio;
+  }
+
+  public void setLfhRatio(Double lfhRatio) {
+    this.lfhRatio = lfhRatio;
+  }
+
+  public Double getLfhRatioVariance() {
+    return lfhRatioVariance;
+  }
+
+  public void setLfhRatioVariance(Double lfhRatioVariance) {
+    this.lfhRatioVariance = lfhRatioVariance;
   }
 
   @Override
   public String toString() {
-    return "Face{" +
-            "name='" + name + '\'' +
-            ", edwRatio=" + edwRatio +
-            ", edwRatioVariance=" + edwRatioVariance +
-            ", nfRatio=" + nfRatio +
-            ", nfRatioVariance=" + nfRatioVariance +
-            '}';
+
+    return "Face(\"" + name + '"' +
+            ", " + edwRatio +
+            ", " + edwRatioVariance +
+            ", " + nfhRatio +
+            ", " + nfhRatioVariance +
+            ", " + nfwRatio +
+            ", " + nfwRatioVariance +
+            ", " + lfhRatio +
+            ", " + lfhRatioVariance +
+            ')';
   }
 }

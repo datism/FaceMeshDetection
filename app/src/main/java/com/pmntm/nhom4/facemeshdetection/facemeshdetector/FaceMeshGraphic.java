@@ -193,9 +193,16 @@ public class FaceMeshGraphic extends Graphic {
 
   private List<FaceMeshPoint> getContourPoints(FaceMesh faceMesh) {
     List<FaceMeshPoint> contourPoints = new ArrayList<>();
-    for (int type : DISPLAY_CONTOURS) {
-      contourPoints.addAll(faceMesh.getPoints(type));
-    }
+//    for (int type : DISPLAY_CONTOURS) {
+//      contourPoints.addAll(faceMesh.getPoints(type));
+//    }
+    List<FaceMeshPoint> points = faceMesh.getAllPoints();
+    contourPoints.add(points.get(278));
+    contourPoints.add(points.get(48));
+    contourPoints.add(faceMesh.getPoints(FaceMesh.FACE_OVAL).get(9));
+    contourPoints.add(faceMesh.getPoints(FaceMesh.FACE_OVAL).get(27));
+    contourPoints.add(faceMesh.getPoints(FaceMesh.UPPER_LIP_TOP).get(5));
+    contourPoints.add(faceMesh.getPoints(FaceMesh.LOWER_LIP_BOTTOM).get(5));
 
 //    List<FaceMeshPoint> pointList = new ArrayList<>(faceMesh.getAllPoints());
 //    for (FaceMeshPoint point: pointList) {

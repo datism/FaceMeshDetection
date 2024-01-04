@@ -92,6 +92,10 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
     List<FaceMeshPoint> left_eye = faceMesh.getPoints(FaceMesh.LEFT_EYE);
     List<FaceMeshPoint> right_eye = faceMesh.getPoints(FaceMesh.RIGHT_EYE);
     List<FaceMeshPoint> face_outline = faceMesh.getPoints(FaceMesh.FACE_OVAL);
+    List<FaceMeshPoint> upper_lip_top = faceMesh.getPoints(FaceMesh.UPPER_LIP_TOP);
+    List<FaceMeshPoint> upper_lip_bottom = faceMesh.getPoints(FaceMesh.UPPER_LIP_BOTTOM);
+    List<FaceMeshPoint> lower_lip_top = faceMesh.getPoints(FaceMesh.LOWER_LIP_TOP);
+    List<FaceMeshPoint> lower_lip_bottom = faceMesh.getPoints(FaceMesh.LOWER_LIP_BOTTOM);
 
 //    Log.d("Feature property", "Nose 1: " + nose_bridge.get(0).getPosition().toString());
 //    Log.d("Feature property", "Nose 2: " + nose_bridge.get(nose_bridge.size() - 1).getPosition().toString());
@@ -115,27 +119,60 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
 //    Log.d("Feature property", "Right eye width: " + right_eye_width);
 //    Log.d("Feature property", "Eye width: " + (right_eye_width + left_eye_width)/2);
 
+    List<FaceMeshPoint> points = faceMesh.getAllPoints();
+    double nose_width = getPointsDistance(points.get(48).getPosition(), points.get(278).getPosition());
+    double face_width = getPointsDistance(face_outline.get(9).getPosition(), face_outline.get(27).getPosition());
+
+    double upper_lip_height = getPointsDistance(upper_lip_top.get(5).getPosition(), lower_lip_bottom.get(5).getPosition());
+
+
     double eyes_dist_width_ratio = eyes_distance/ ((left_eye_width + right_eye_width)/2);
-    double nose_face_ratio =  face_length / nose_bridge_length;
+    double nose_face_height_ratio =  face_length / nose_bridge_length;
+    double nose_face_width_ratio = face_width / nose_width;
+    double lip_face_height_ratio = face_length / upper_lip_height;
 //    Log.d("Feature property", "Eyes ratio: " + eyes_dist_width_ratio);
 //    Log.d("Feature property", "Face nose ratio: " + nose_face_ratio);
 //    Log.d("Feature property", "-----------------------------------------");
 
+
 //    if (faces.size() < 200) {
-//      faces.add(new Face(eyes_dist_width_ratio, nose_face_ratio));
+//      faces.add(new Face(eyes_dist_width_ratio, nose_face_height_ratio, nose_face_width_ratio, lip_face_height_ratio));
 //    }
 //    else {
 //      if (face == null)
-//        face = new Face("elon musk",
+//        face = new Face("dat",
 //                      faces.stream().mapToDouble(Face::getEdwRatio).average().orElse(0),
 //                      calculateVariance(faces.stream().map(Face::getEdwRatio).collect(Collectors.toList())),
-//                      faces.stream().mapToDouble(Face::getNfRatio).average().orElse(0),
-//                      calculateVariance(faces.stream().map(Face::getNfRatio).collect(Collectors.toList())));
+//                      faces.stream().mapToDouble(Face::getNfhRatio).average().orElse(0),
+//                      calculateVariance(faces.stream().map(Face::getNfhRatio).collect(Collectors.toList())),
+//                      faces.stream().mapToDouble(Face::getNfwRatio).average().orElse(0),
+//                      calculateVariance(faces.stream().map(Face::getNfwRatio).collect(Collectors.toList())),
+//                      faces.stream().mapToDouble(Face::getLfhRatio).average().orElse(0),
+//                      calculateVariance(faces.stream().map(Face::getLfhRatio).collect(Collectors.toList())));
 //      else {
+//        int validCount =  0;
+//
 //        if (face.getEdwRatio() - face.getEdwRatioVariance() < eyes_dist_width_ratio &&
-//            face.getEdwRatio() + face.getEdwRatioVariance() > eyes_dist_width_ratio &&
-//            face.getNfRatio() - face.getNfRatioVariance() < nose_face_ratio &&
-//            face.getNfRatio() + face.getNfRatioVariance() > nose_face_ratio) {
+//            face.getEdwRatio() + face.getEdwRatioVariance() > eyes_dist_width_ratio) {
+//          validCount++;
+//        }
+//
+//        if (face.getNfhRatio() - face.getNfhRatioVariance() < nose_face_height_ratio &&
+//            face.getNfhRatio() + face.getNfhRatioVariance() > nose_face_height_ratio) {
+//          validCount++;
+//        }
+//
+//        if (face.getNfwRatio() - face.getNfwRatioVariance() < nose_face_width_ratio &&
+//            face.getNfwRatio() + face.getNfwRatioVariance() > nose_face_width_ratio) {
+//          validCount++;
+//        }
+//
+//        if (face.getLfhRatio() - face.getLfhRatioVariance() < lip_face_height_ratio &&
+//                face.getLfhRatio() + face.getLfhRatioVariance() > lip_face_height_ratio) {
+//          validCount++;
+//        }
+//
+//        if (validCount > 1) {
 //          Log.d("Feature property", face.toString());
 //          Log.d("Feature property", "-----------------------------------------");
 //        }
@@ -144,18 +181,38 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
 //
 //    return null;
 
-//    List<Face> faceIDs = this.faceHandler.getFaces(new Face(eyes_dist_width_ratio, nose_face_ratio));
-//    if (faceIDs.size() == 1)
-//      return faceIDs.get(0).getName();
-//    else
-//      return null;
 
-    Face faceId = faceList.stream().filter(face ->
-            face.getEdwRatio() - face.getEdwRatioVariance() < eyes_dist_width_ratio &&
-            face.getEdwRatio() + face.getEdwRatioVariance() > eyes_dist_width_ratio &&
-            face.getNfRatio() - face.getNfRatioVariance() < nose_face_ratio &&
-            face.getNfRatio() + face.getNfRatioVariance() > nose_face_ratio
-    ).findAny().orElse(null);
+    int maxValidCount = 0;
+    Face faceId = null;
+    for (Face face: faceList) {
+
+      int validCount = 0;
+
+      if (face.getEdwRatio() - face.getEdwRatioVariance() < eyes_dist_width_ratio &&
+              face.getEdwRatio() + face.getEdwRatioVariance() > eyes_dist_width_ratio) {
+        validCount++;
+      }
+
+      if (face.getNfhRatio() - face.getNfhRatioVariance() < nose_face_height_ratio &&
+              face.getNfhRatio() + face.getNfhRatioVariance() > nose_face_height_ratio) {
+        validCount++;
+      }
+
+      if (face.getNfwRatio() - face.getNfwRatioVariance() < nose_face_width_ratio &&
+              face.getNfwRatio() + face.getNfwRatioVariance() > nose_face_width_ratio) {
+        validCount++;
+      }
+
+      if (face.getLfhRatio() - face.getLfhRatioVariance() < lip_face_height_ratio &&
+              face.getLfhRatio() + face.getLfhRatioVariance() > lip_face_height_ratio) {
+        validCount++;
+      }
+
+      if (validCount >= 2 && validCount > maxValidCount) {
+        maxValidCount = validCount;
+        faceId = face;
+      }
+    }
 
     if (faceId == null)
       return null;
