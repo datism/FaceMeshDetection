@@ -25,7 +25,9 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.RectF;
 import android.os.Build;
+import android.os.DeadObjectException;
 import android.util.Log;
+import android.util.Pair;
 
 import com.google.mlkit.vision.common.PointF3D;
 import com.google.mlkit.vision.common.Triangle;
@@ -52,7 +54,7 @@ public class FaceMeshGraphic extends Graphic {
   private static final float FACE_POSITION_RADIUS = 8.0f;
   private static final float BOX_STROKE_WIDTH = 5.0f;
 
-  private static final float ID_TEXT_SIZE = 40.0f;
+  private static final float ID_TEXT_SIZE = 50.0f;
 
   private final Paint positionPaint;
   private final Paint boxPaint;
@@ -60,6 +62,7 @@ public class FaceMeshGraphic extends Graphic {
   private final Paint labelPaint;
   private volatile FaceMesh faceMesh;
   private volatile String name;
+  private volatile double similarity;
   private final int useCase;
   private float zMin;
   private float zMax;
@@ -106,9 +109,12 @@ public class FaceMeshGraphic extends Graphic {
     useCase = USE_CASE_CONTOUR_ONLY;
   }
 
-  FaceMeshGraphic(GraphicOverlay overlay, FaceMesh faceMesh, String name) {
+  FaceMeshGraphic(GraphicOverlay overlay, FaceMesh faceMesh, Pair<String, Double> faceId) {
     this(overlay, faceMesh);
-    this.name = name;
+    if (faceId != null) {
+      this.name = faceId.first;
+      this.similarity = faceId.second;
+    }
   }
 
   /** Draws the face annotations for position on the supplied canvas. */
@@ -130,10 +136,15 @@ public class FaceMeshGraphic extends Graphic {
     canvas.drawRect(rect, boxPaint);
 
     if (name != null) {
+
       float lineHeight = ID_TEXT_SIZE + BOX_STROKE_WIDTH;
-      float yLabelOffset = -lineHeight;
+      float yLabelOffset = - 2 * lineHeight;
+
       String idString = "ID: " + name;
+      String accString = "Acc: " + String.format(Locale.US, "%.1f%%", similarity * 100);
       float textWidth = idPaint.measureText(idString);
+      textWidth = max(textWidth, idPaint.measureText(accString));
+
       // Draw labels
       canvas.drawRect(
               rect.left - BOX_STROKE_WIDTH,
@@ -142,8 +153,9 @@ public class FaceMeshGraphic extends Graphic {
               rect.top,
               labelPaint);
 
-      canvas.drawText(
-              idString, rect.left, rect.top, idPaint);
+      canvas.drawText(idString, rect.left, rect.top - lineHeight, idPaint);
+
+      canvas.drawText(accString, rect.left, rect.top, idPaint);
     }
 
     // Draw face mesh
@@ -196,80 +208,6 @@ public class FaceMeshGraphic extends Graphic {
     for (int type : DISPLAY_CONTOURS) {
       contourPoints.addAll(faceMesh.getPoints(type));
     }
-//    List<FaceMeshPoint> points = faceMesh.getAllPoints();
-//    contourPoints.add(points.get(278));
-//    contourPoints.add(points.get(48));
-//    contourPoints.add(faceMesh.getPoints(FaceMesh.FACE_OVAL).get(9));
-//    contourPoints.add(faceMesh.getPoints(FaceMesh.FACE_OVAL).get(27));
-//    contourPoints.add(faceMesh.getPoints(FaceMesh.UPPER_LIP_TOP).get(5));
-//    contourPoints.add(faceMesh.getPoints(FaceMesh.LOWER_LIP_BOTTOM).get(5));
-
-//    List<FaceMeshPoint> pointList = new ArrayList<>(faceMesh.getAllPoints());
-//    for (FaceMeshPoint point: pointList) {
-//      if (point.getPosition().getZ() == 0) {
-//        contourPoints.add(point);
-//      }
-//    }
-
-//    FaceMeshPoint smallestZPoint = null;
-//    FaceMeshPoint largestZPoint = null;
-//    float smallestZ = Float.MAX_VALUE;
-//    float largestZ = Float.MIN_VALUE;
-//
-//    for (FaceMeshPoint point: pointList) {
-//      float z = point.getPosition().getZ();
-//
-//      if (z < smallestZ) {
-//        smallestZ = z;
-//        smallestZPoint = point;
-//      }
-//
-//      if (z > largestZ) {
-//        largestZ = z;
-//        largestZPoint = point;
-//      }
-//    }
-//
-//    contourPoints.add(smallestZPoint);
-//    contourPoints.add(largestZPoint);
-
-//    Log.d("Feature property", "Largest: " + largestZPoint.getPosition().toString());
-//    Log.d("Feature property", "Smallest: " + smallestZPoint.getPosition().toString());
-
-//
-//    List<FaceMeshPoint> nose_bridge = faceMesh.getPoints(FaceMesh.NOSE_BRIDGE);
-//
-//    contourPoints.add(nose_bridge.get(0));
-//    contourPoints.add(nose_bridge.get(nose_bridge.size() - 1));
-//    Log.d("Feature property", "Nose 1: " + nose_bridge.get(0).getPosition().toString());
-//    Log.d("Feature property", "Nose 2: " + nose_bridge.get(nose_bridge.size() - 1).getPosition().toString());
-//
-//    double nose_bridge_length = getPointsDistance(
-//            nose_bridge.get(0).getPosition(),
-//            nose_bridge.get(nose_bridge.size() - 1) .getPosition());
-//    Log.d("Feature property", "Nose bridge length: " + nose_bridge_length);
-//
-//    List<FaceMeshPoint> left_eye = faceMesh.getPoints(FaceMesh.LEFT_EYE);
-//    List<FaceMeshPoint> right_eye = faceMesh.getPoints(FaceMesh.RIGHT_EYE);
-//
-//
-//    Log.d("Feature property", "Left eye: " + left_eye.get(left_eye.size()/2).getPosition().toString());
-//    Log.d("Feature property", "Right eye: " + right_eye.get(0).getPosition().toString());
-//
-//    contourPoints.add(left_eye.get(left_eye.size()/2));
-//    contourPoints.add(right_eye.get(0));
-//
-//    double eyes_distance = getPointsDistance(left_eye.get(left_eye.size()/2).getPosition(),
-//            right_eye.get(0).getPosition());
-//    Log.d("Feature property", "Eyes distance: " + eyes_distance);
-//    Log.d("Feature property", "Ratio: " + nose_bridge_length / eyes_distance);
-//
-//    Log.d("Feature property", "-----------------------------------------");
-
-//    List<FaceMeshPoint> face_outline = faceMesh.getPoints(FaceMesh.FACE_OVAL);
-//    contourPoints.add(face_outline.get(0));
-//    contourPoints.add(face_outline.get(face_outline.size()/2));
-
 
     return contourPoints;
   }

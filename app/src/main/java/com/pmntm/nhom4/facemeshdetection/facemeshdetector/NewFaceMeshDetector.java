@@ -52,6 +52,7 @@ import com.pmntm.nhom4.facemeshdetection.db.Face;
 import com.pmntm.nhom4.facemeshdetection.db.FaceHandler;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -89,7 +90,7 @@ public class NewFaceMeshDetector extends VisionProcessorBase<List<FaceMesh>> {
           @NonNull List<FaceMesh> faces, @NonNull GraphicOverlay graphicOverlay) {
     for (FaceMesh facemesh : faces) {
       String faceID = getFaceID(facemesh);
-      graphicOverlay.add(new FaceMeshGraphic(graphicOverlay, facemesh, faceID));
+      graphicOverlay.add(new FaceMeshGraphic(graphicOverlay, facemesh, null));
     }
   }
 
@@ -98,8 +99,8 @@ public class NewFaceMeshDetector extends VisionProcessorBase<List<FaceMesh>> {
     Log.e(TAG, "Face detection failed " + e);
   }
 
-  private List<Face> faces = new ArrayList<>();
-  private Face face;
+  private final List<List<Double>> vectorList = new ArrayList<>();
+  boolean done = false;
   private String getFaceID(FaceMesh faceMesh) {
     List<FaceMeshPoint> faceOutline = faceMesh.getPoints(FaceMesh.FACE_OVAL);
     double facePerimeter = 0;
@@ -110,49 +111,56 @@ public class NewFaceMeshDetector extends VisionProcessorBase<List<FaceMesh>> {
     }
 
     List<Triangle<FaceMeshPoint>> triangles = faceMesh.getAllTriangles();
-    List<com.pmntm.nhom4.facemeshdetection.db.Triangle> faceTriangle = new ArrayList<>();
+    List<Double> perimeterRatios = new ArrayList<>();
     for (Triangle<FaceMeshPoint> triangle : triangles) {
       double trianglePerimeter = getTrianglePerimeter(triangle);
-      faceTriangle.add(new com.pmntm.nhom4.facemeshdetection.db.Triangle(facePerimeter / trianglePerimeter));
+      perimeterRatios.add(trianglePerimeter / facePerimeter);
     }
 
-    if (faces.size() < 100) {
-      faces.add(new Face(faceTriangle));
-    } else if (face == null) {
-      List<com.pmntm.nhom4.facemeshdetection.db.Triangle> varTriangles = new ArrayList<>();
+    if (vectorList.size() < 100)
+    {
+      vectorList.add(perimeterRatios);
+    }
+    else if (!done) {
+      int dimensions = vectorList.get(0).size(); // Number of dimensions
 
-      List<List<com.pmntm.nhom4.facemeshdetection.db.Triangle>> trianglesList = new ArrayList<>();
-      for (Face faceT : faces) {
-        trianglesList.add(faceT.getTriangles());
+      // Initialize the average vector with zeros
+      List<Double> averageVector = new ArrayList<>(Collections.nCopies(dimensions, 0.0));
+
+      // Compute the sum of vectors
+      for (List<Double> vector : vectorList) {
+        // Check if the vector dimensions match
+        if (vector.size() != dimensions) {
+          Log.d(TAG,"Vector dimensions do not match.");
+        }
+
+        // Add each element of the vector to the corresponding element in the average vector
+        for (int i = 0; i < dimensions; i++) {
+          averageVector.set(i, averageVector.get(i) + vector.get(i));
+        }
       }
 
-      for (int i = 0; i < trianglesList.get(0).size(); i++) {
-        double sum = 0;
-
-        //Cal mean
-        for (int j = 0; j < trianglesList.size(); j++) {
-          sum += trianglesList.get(j).get(i).getPerimeter();
-        }
-        double mean = sum / trianglesList.size();
-
-        //Cal variance
-        double diffSum = 0;
-        for (int j = 0; j < trianglesList.size(); j++) {
-          diffSum += Math.abs(trianglesList.get(j).get(i).getPerimeter() - mean);
-        }
-        double variance = diffSum / trianglesList.size();
-
-        varTriangles.add(new com.pmntm.nhom4.facemeshdetection.db.Triangle(mean, variance));
+      // Divide each element of the average vector by the number of vectors
+      int vectorCount = vectorList.size();
+      for (int i = 0; i < dimensions; i++) {
+        averageVector.set(i, averageVector.get(i) / vectorCount);
       }
 
-      showPopupWindow(varTriangles);
-      face = new Face(varTriangles);
-   }
+      // Get average distance
+      double averageDist = 0;
+      for (List<Double> vector: vectorList) {
+        averageDist += getEuclideanDistance(vector, averageVector);
+      }
+      averageDist /= vectorList.size();
+
+      done = true;
+      showPopupWindow(averageVector, averageDist);
+    }
 
     return null;
   }
 
-  void showPopupWindow(List<com.pmntm.nhom4.facemeshdetection.db.Triangle> varTriangles)
+  void showPopupWindow(List<Double> averageVector, double averageDist)
   {
     View view = View.inflate(this.context, R.layout.popup_layout , null);
 
@@ -168,12 +176,26 @@ public class NewFaceMeshDetector extends VisionProcessorBase<List<FaceMesh>> {
     ok.setOnClickListener(v -> {
       String name = nameEditText.getText().toString();
 
-      Face face1 = new Face(name, varTriangles);
+      Face face1 = new Face(name, averageDist, averageVector);
       faceHandler.addFace(face1);
 
       ((Activity) context).startActivity(new Intent(context, LivePreviewActivity.class));
     });
 
+  }
+
+  public double getEuclideanDistance(List<Double> vector1, List<Double> vector2) {
+    if (vector1.size() != vector2.size()) {
+      Log.d(TAG,"Vector dimensions do not match");
+    }
+
+    double sumOfSquares = 0.0;
+    for (int i = 0; i < vector1.size(); i++) {
+      double diff = vector1.get(i) - vector2.get(i);
+      sumOfSquares += diff * diff;
+    }
+
+    return Math.sqrt(sumOfSquares);
   }
 
   double getPointsDistance(PointF3D point1, PointF3D point2) {

@@ -17,18 +17,10 @@
 package com.pmntm.nhom4.facemeshdetection.facemeshdetector;
 
 import android.content.Context;
-import android.media.FaceDetector;
-import android.os.Build;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.PopupWindow;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 
 import com.google.android.gms.tasks.Task;
 import com.google.mlkit.vision.common.InputImage;
@@ -46,8 +38,12 @@ import com.pmntm.nhom4.facemeshdetection.db.Face;
 import com.pmntm.nhom4.facemeshdetection.db.FaceHandler;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import kotlin.collections.DoubleIterator;
 
 /** Selfie Face Detector Demo. */
 public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh>> {
@@ -83,7 +79,7 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
   protected void onSuccess(
       @NonNull List<FaceMesh> faces, @NonNull GraphicOverlay graphicOverlay) {
     for (FaceMesh facemesh : faces) {
-      String faceID = getFaceID(facemesh);
+      Pair<String, Double> faceID = getFaceID(facemesh);
       graphicOverlay.add(new FaceMeshGraphic(graphicOverlay, facemesh, faceID));
     }
   }
@@ -93,8 +89,15 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
     Log.e(TAG, "Face detection failed " + e);
   }
 
-  private String getFaceID(FaceMesh faceMesh) {
+  private Pair<String, Double>  getFaceID(FaceMesh faceMesh) {
+    if (faceList.size() == 0) {
+      return null;
+    }
+
+    // Get outline of face
     List<FaceMeshPoint> faceOutline = faceMesh.getPoints(FaceMesh.FACE_OVAL);
+
+    // Calculate face perimeter
     double facePerimeter = 0;
     for (int i = 0; i < faceOutline.size() - 1; i++) {
       PointF3D point1 = faceOutline.get(i).getPosition();
@@ -102,37 +105,74 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
       facePerimeter += getPointsDistance(point1, point2);
     }
 
+    // Calculate perimeter ratio of each triangles to face
     List<Triangle<FaceMeshPoint>> triangles = faceMesh.getAllTriangles();
-    List<com.pmntm.nhom4.facemeshdetection.db.Triangle> faceTriangle = new ArrayList<>();
+    List<Double> perimeterRatio = new ArrayList<>();
     for (Triangle<FaceMeshPoint> triangle : triangles) {
       double trianglePerimeter = getTrianglePerimeter(triangle);
-      faceTriangle.add(new com.pmntm.nhom4.facemeshdetection.db.Triangle(facePerimeter / trianglePerimeter));
+      perimeterRatio.add(trianglePerimeter / facePerimeter);
     }
 
-    String faceName = null;
-    int maxValidCount = 0;
-
-    for (Face faceT : faceList) {
-      List<com.pmntm.nhom4.facemeshdetection.db.Triangle> varTriangles = faceT.getTriangles();
-      int validCount = 0;
-      for (int i = 0; i < varTriangles.size(); ++i) {
-
-        double perimeter = faceTriangle.get(i).getPerimeter();
-        double meanPerimeter = varTriangles.get(i).getPerimeter();
-        double varPerimeter = varTriangles.get(i).getPerimeterVariance();
-
-        if (meanPerimeter + varPerimeter > perimeter && meanPerimeter - varPerimeter < perimeter)
-          validCount++;
-      }
-
-      if ((double) validCount / varTriangles.size() > 0.2 && validCount > maxValidCount) {
-        faceName = faceT.getName();
-        maxValidCount = validCount;
-        Log.d("Feature property", faceT.getName());
-      }
+    // Calculate score of each face's vector to frame's vector
+    List<Double> scores = new ArrayList<>();
+    for (Face face : faceList) {
+      double dist = getEuclideanDistance(perimeterRatio, face.getPerimeterRatio());
+      scores.add(getScore(dist, face.getAverageDistance()));
     }
 
-    return faceName;
+    // Sort score list and get indices
+    int[] sortedIndices = IntStream.range(0, scores.size())
+            .boxed().sorted(Comparator.comparing(scores::get).reversed())
+            .mapToInt(ele -> ele).toArray();
+
+    return  new Pair<>(faceList.get(sortedIndices[0]).getName(), scores.get(sortedIndices[0]));
+  }
+
+  public static double getCosineSimilarity(List<Double> vector1, List<Double> vector2) {
+    // Check if the vectors have the same length
+    if (vector1.size() != vector2.size()) {
+      Log.d(TAG,"Vector dimensions do not match.");
+    }
+
+    // Calculate the dot product of the two vectors
+    double dotProduct = 0.0;
+    for (int i = 0; i < vector1.size(); i++) {
+      dotProduct += vector1.get(i) * vector2.get(i);
+    }
+
+    // Calculate the magnitudes of the two vectors
+    double magnitudeVector1 = getMagnitude(vector1);
+    double magnitudeVector2 = getMagnitude(vector2);
+
+    // Calculate the cosine similarity
+    return dotProduct / (magnitudeVector1 * magnitudeVector2);
+  }
+
+  public double getScore(double n1, double n2) {
+    return Math.min(n1,n2) / Math.max(n1,n2);
+  }
+
+
+  public double getEuclideanDistance(List<Double> vector1, List<Double> vector2) {
+    if (vector1.size() != vector2.size()) {
+      Log.d(TAG,"Vector dimensions do not match");
+    }
+
+    double sumOfSquares = 0.0;
+    for (int i = 0; i < vector1.size(); i++) {
+      double diff = vector1.get(i) - vector2.get(i);
+      sumOfSquares += diff * diff;
+    }
+
+    return Math.sqrt(sumOfSquares);
+  }
+
+  private static double getMagnitude(List<Double> vector) {
+    double sumOfSquares = 0.0;
+    for (double value : vector) {
+      sumOfSquares += value * value;
+    }
+    return Math.sqrt(sumOfSquares);
   }
 
 

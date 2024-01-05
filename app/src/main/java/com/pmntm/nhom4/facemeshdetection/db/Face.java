@@ -4,15 +4,13 @@ import java.util.List;
 
 public class Face {
   String name;
-  List<Triangle> triangles;
+  double averageDistance;
+  List<Double> perimeterRatio;
 
-  public Face(List<Triangle> triangles) {
-    this.triangles = triangles;
-  }
-
-  public Face(String name, List<Triangle> triangles) {
+  public Face(String name, double averageDistance, List<Double> perimeterRatio) {
     this.name = name;
-    this.triangles = triangles;
+    this.averageDistance = averageDistance;
+    this.perimeterRatio = perimeterRatio;
   }
 
   public String getName() {
@@ -23,11 +21,19 @@ public class Face {
     this.name = name;
   }
 
-  public List<Triangle> getTriangles() {
-    return triangles;
+  public double getAverageDistance() {
+    return averageDistance;
   }
 
-  public void setTriangles(List<Triangle> triangles) {
-    this.triangles = triangles;
+  public void setAverageDistance(double averageDistance) {
+    this.averageDistance = averageDistance;
+  }
+
+  public List<Double> getPerimeterRatio() {
+    return perimeterRatio;
+  }
+
+  public void setPerimeterRatio(List<Double> perimeterRatio) {
+    this.perimeterRatio = perimeterRatio;
   }
 }
