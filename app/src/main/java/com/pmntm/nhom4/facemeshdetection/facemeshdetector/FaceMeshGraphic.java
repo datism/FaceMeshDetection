@@ -147,36 +147,36 @@ public class FaceMeshGraphic extends Graphic {
     }
 
     // Draw face mesh
-    List<FaceMeshPoint> points =
-        useCase == USE_CASE_CONTOUR_ONLY ? getContourPoints(faceMesh) : faceMesh.getAllPoints();
+//    List<FaceMeshPoint> points =
+//        useCase == USE_CASE_CONTOUR_ONLY ? getContourPoints(faceMesh) : faceMesh.getAllPoints();
     List<Triangle<FaceMeshPoint>> triangles = faceMesh.getAllTriangles();
 
-    zMin = Float.MAX_VALUE;
-    zMax = Float.MIN_VALUE;
-    for (FaceMeshPoint point : points) {
-      zMin = min(zMin, point.getPosition().getZ());
-      zMax = max(zMax, point.getPosition().getZ());
-    }
+//    zMin = Float.MAX_VALUE;
+//    zMax = Float.MIN_VALUE;
+//    for (FaceMeshPoint point : points) {
+//      zMin = min(zMin, point.getPosition().getZ());
+//      zMax = max(zMax, point.getPosition().getZ());
+//    }
+//
+//    // Draw face mesh points
+//    for (FaceMeshPoint point : points) {
+//      updatePaintColorByZValue(
+//          positionPaint,
+//          canvas,
+//          /* visualizeZ= */ true,
+//          /* rescaleZForVisualization= */ true,
+//          point.getPosition().getZ(),
+//          zMin,
+//          zMax);
+//      canvas.drawCircle(
+//          translateX(point.getPosition().getX()),
+//          translateY(point.getPosition().getY()),
+//          FACE_POSITION_RADIUS,
+//          positionPaint);
+//    }
 
-    // Draw face mesh points
-    for (FaceMeshPoint point : points) {
-      updatePaintColorByZValue(
-          positionPaint,
-          canvas,
-          /* visualizeZ= */ true,
-          /* rescaleZForVisualization= */ true,
-          point.getPosition().getZ(),
-          zMin,
-          zMax);
-      canvas.drawCircle(
-          translateX(point.getPosition().getX()),
-          translateY(point.getPosition().getY()),
-          FACE_POSITION_RADIUS,
-          positionPaint);
-    }
 
-
-    if (useCase == FaceMeshDetectorOptions.FACE_MESH) {
+    if (true) {
       // Draw face mesh triangles
       for (Triangle<FaceMeshPoint> triangle : triangles) {
         List<FaceMeshPoint> faceMeshPoints = triangle.getAllPoints();
@@ -193,16 +193,16 @@ public class FaceMeshGraphic extends Graphic {
 
   private List<FaceMeshPoint> getContourPoints(FaceMesh faceMesh) {
     List<FaceMeshPoint> contourPoints = new ArrayList<>();
-//    for (int type : DISPLAY_CONTOURS) {
-//      contourPoints.addAll(faceMesh.getPoints(type));
-//    }
-    List<FaceMeshPoint> points = faceMesh.getAllPoints();
-    contourPoints.add(points.get(278));
-    contourPoints.add(points.get(48));
-    contourPoints.add(faceMesh.getPoints(FaceMesh.FACE_OVAL).get(9));
-    contourPoints.add(faceMesh.getPoints(FaceMesh.FACE_OVAL).get(27));
-    contourPoints.add(faceMesh.getPoints(FaceMesh.UPPER_LIP_TOP).get(5));
-    contourPoints.add(faceMesh.getPoints(FaceMesh.LOWER_LIP_BOTTOM).get(5));
+    for (int type : DISPLAY_CONTOURS) {
+      contourPoints.addAll(faceMesh.getPoints(type));
+    }
+//    List<FaceMeshPoint> points = faceMesh.getAllPoints();
+//    contourPoints.add(points.get(278));
+//    contourPoints.add(points.get(48));
+//    contourPoints.add(faceMesh.getPoints(FaceMesh.FACE_OVAL).get(9));
+//    contourPoints.add(faceMesh.getPoints(FaceMesh.FACE_OVAL).get(27));
+//    contourPoints.add(faceMesh.getPoints(FaceMesh.UPPER_LIP_TOP).get(5));
+//    contourPoints.add(faceMesh.getPoints(FaceMesh.LOWER_LIP_BOTTOM).get(5));
 
 //    List<FaceMeshPoint> pointList = new ArrayList<>(faceMesh.getAllPoints());
 //    for (FaceMeshPoint point: pointList) {
