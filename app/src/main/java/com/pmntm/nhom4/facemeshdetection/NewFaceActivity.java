@@ -1,23 +1,7 @@
-/*
- * Copyright 2020 Google LLC. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.pmntm.nhom4.facemeshdetection;
 
 import android.Manifest;
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -25,11 +9,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -38,21 +20,17 @@ import com.google.android.gms.common.annotation.KeepName;
 
 import com.pmntm.nhom4.facemeshdetection.db.Face;
 import com.pmntm.nhom4.facemeshdetection.db.FaceHandler;
-import com.pmntm.nhom4.facemeshdetection.facemeshdetector.FaceMeshDetectorProcessor;
+import com.pmntm.nhom4.facemeshdetection.facemeshdetector.NewFaceMeshDetector;
 
 import java.io.IOException;
-import java.security.Permission;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Live preview demo for ML Kit APIs. */
 @KeepName
-public final class LivePreviewActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener {
+public final class NewFaceActivity extends AppCompatActivity {
   private static final String FACE_MESH_DETECTION = "Face Mesh Detection (Beta)";
 
   private static final String TAG = "LivePreviewActivity";
-
-  private Button btn_new;
 
   private CameraSource cameraSource = null;
   private CameraSourcePreview preview;
@@ -61,6 +39,9 @@ public final class LivePreviewActivity extends AppCompatActivity implements Comp
 
   private FaceHandler faceHandler;
 
+  private Button btn_back, btn_ok;
+  private EditText input_name;
+
   private static final String[] REQUIRED_RUNTIME_PERMISSIONS = {
           Manifest.permission.CAMERA,
           Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -68,56 +49,39 @@ public final class LivePreviewActivity extends AppCompatActivity implements Comp
   };
   private static final int PERMISSION_REQUESTS = 1;
 
+  @SuppressLint("MissingInflatedId")
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Log.d(TAG, "onCreate");
 
-    setContentView(R.layout.activity_live_preview);
+    setContentView(R.layout.activity_new_face);
 
-    preview = findViewById(R.id.preview_view);
+    preview = findViewById(R.id.preview_view2);
     if (preview == null) {
       Log.d(TAG, "Preview is null");
     }
-    graphicOverlay = findViewById(R.id.graphic_overlay);
+    graphicOverlay = findViewById(R.id.graphic_overlay2);
     if (graphicOverlay == null) {
       Log.d(TAG, "graphicOverlay is null");
     }
-
-    ToggleButton facingSwitch = findViewById(R.id.facing_switch);
-    facingSwitch.setOnCheckedChangeListener(this);
 
     if (!allRuntimePermissionsGranted()) {
       getRuntimePermissions();
     }
 
-    btn_new = findViewById(R.id.btn_new);
-    btn_new.setOnClickListener(new View.OnClickListener() {
-      public void onClick(View v) {
-        Log.d("BUTTONS", "Clicked button New");
-//        setContentView(R.layout.activity_new_face);
-//        setContentView(R.layout.activity_second);
-        startActivity(new Intent(LivePreviewActivity.this, NewFaceActivity.class));
+    faceHandler = new FaceHandler(this);
 
+    createCameraSource(selectedModel);
+
+    // Back to main activity
+    btn_back = findViewById(R.id.btn_back);
+    btn_back.setOnClickListener(new View.OnClickListener() {
+      public void onClick(View v) {
+        Log.d("BUTTONS", "Clicked button Back");
+        startActivity(new Intent(NewFaceActivity.this, LivePreviewActivity.class));
       }
     });
-
-    faceHandler = new FaceHandler(this);
-    createCameraSource(selectedModel);
-  }
-
-  @Override
-  public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-    Log.d(TAG, "Set facing");
-    if (cameraSource != null) {
-      if (isChecked) {
-        cameraSource.setFacing(CameraSource.CAMERA_FACING_FRONT);
-      } else {
-        cameraSource.setFacing(CameraSource.CAMERA_FACING_BACK);
-      }
-    }
-    preview.stop();
-    startCameraSource();
   }
 
   private void createCameraSource(String model) {
@@ -129,7 +93,7 @@ public final class LivePreviewActivity extends AppCompatActivity implements Comp
     try {
       switch (model) {
         case FACE_MESH_DETECTION:
-          cameraSource.setMachineLearningFrameProcessor(new FaceMeshDetectorProcessor(this, faceHandler));
+          cameraSource.setMachineLearningFrameProcessor(new NewFaceMeshDetector(this, faceHandler));
           break;
         default:
           Log.e(TAG, "Unknown model: " + model);
@@ -137,10 +101,10 @@ public final class LivePreviewActivity extends AppCompatActivity implements Comp
     } catch (RuntimeException e) {
       Log.e(TAG, "Can not create image processor: " + model, e);
       Toast.makeText(
-              getApplicationContext(),
-              "Can not create image processor: " + e.getMessage(),
-              Toast.LENGTH_LONG)
-          .show();
+                      getApplicationContext(),
+                      "Can not create image processor: " + e.getMessage(),
+                      Toast.LENGTH_LONG)
+              .show();
     }
   }
 

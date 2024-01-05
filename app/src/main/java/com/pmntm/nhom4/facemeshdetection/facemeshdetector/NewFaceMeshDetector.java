@@ -16,19 +16,24 @@
 
 package com.pmntm.nhom4.facemeshdetection.facemeshdetector;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.media.FaceDetector;
 import android.os.Build;
 import android.util.Log;
-import android.view.LayoutInflater;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.google.android.gms.tasks.Task;
 import com.google.mlkit.vision.common.InputImage;
@@ -41,6 +46,7 @@ import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions;
 
 import com.google.mlkit.vision.facemesh.FaceMeshPoint;
 import com.pmntm.nhom4.facemeshdetection.GraphicOverlay;
+import com.pmntm.nhom4.facemeshdetection.LivePreviewActivity;
 import com.pmntm.nhom4.facemeshdetection.R;
 import com.pmntm.nhom4.facemeshdetection.db.Face;
 import com.pmntm.nhom4.facemeshdetection.db.FaceHandler;
@@ -50,22 +56,21 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /** Selfie Face Detector Demo. */
-public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh>> {
+public class NewFaceMeshDetector extends VisionProcessorBase<List<FaceMesh>> {
 
   private static final String TAG = "SelfieFaceProcessor";
 
   private final FaceMeshDetector detector;
   private final FaceHandler faceHandler;
+  private final Context context;
 
-  private List<Face> faceList;
-
-  public FaceMeshDetectorProcessor(Context context, FaceHandler faceHandler) {
+  public NewFaceMeshDetector(Context context, FaceHandler faceHandler) {
     super(context);
+    this.context = context;
     FaceMeshDetectorOptions.Builder optionsBuilder = new FaceMeshDetectorOptions.Builder();
 
     detector = FaceMeshDetection.getClient(optionsBuilder.build());
     this.faceHandler = faceHandler;
-    this.faceList = this.faceHandler.getAllFaces();
   }
 
   @Override
@@ -81,7 +86,7 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
 
   @Override
   protected void onSuccess(
-      @NonNull List<FaceMesh> faces, @NonNull GraphicOverlay graphicOverlay) {
+          @NonNull List<FaceMesh> faces, @NonNull GraphicOverlay graphicOverlay) {
     for (FaceMesh facemesh : faces) {
       String faceID = getFaceID(facemesh);
       graphicOverlay.add(new FaceMeshGraphic(graphicOverlay, facemesh, faceID));
@@ -93,6 +98,8 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
     Log.e(TAG, "Face detection failed " + e);
   }
 
+  private List<Face> faces = new ArrayList<>();
+  private Face face;
   private String getFaceID(FaceMesh faceMesh) {
     List<FaceMeshPoint> faceOutline = faceMesh.getPoints(FaceMesh.FACE_OVAL);
     double facePerimeter = 0;
@@ -109,32 +116,65 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
       faceTriangle.add(new com.pmntm.nhom4.facemeshdetection.db.Triangle(facePerimeter / trianglePerimeter));
     }
 
-    String faceName = null;
-    int maxValidCount = 0;
+    if (faces.size() < 100) {
+      faces.add(new Face(faceTriangle));
+    } else if (face == null) {
+      List<com.pmntm.nhom4.facemeshdetection.db.Triangle> varTriangles = new ArrayList<>();
 
-    for (Face faceT : faceList) {
-      List<com.pmntm.nhom4.facemeshdetection.db.Triangle> varTriangles = faceT.getTriangles();
-      int validCount = 0;
-      for (int i = 0; i < varTriangles.size(); ++i) {
-
-        double perimeter = faceTriangle.get(i).getPerimeter();
-        double meanPerimeter = varTriangles.get(i).getPerimeter();
-        double varPerimeter = varTriangles.get(i).getPerimeterVariance();
-
-        if (meanPerimeter + varPerimeter > perimeter && meanPerimeter - varPerimeter < perimeter)
-          validCount++;
+      List<List<com.pmntm.nhom4.facemeshdetection.db.Triangle>> trianglesList = new ArrayList<>();
+      for (Face faceT : faces) {
+        trianglesList.add(faceT.getTriangles());
       }
 
-      if ((double) validCount / varTriangles.size() > 0.2 && validCount > maxValidCount) {
-        faceName = faceT.getName();
-        maxValidCount = validCount;
-        Log.d("Feature property", faceT.getName());
-      }
-    }
+      for (int i = 0; i < trianglesList.get(0).size(); i++) {
+        double sum = 0;
 
-    return faceName;
+        //Cal mean
+        for (int j = 0; j < trianglesList.size(); j++) {
+          sum += trianglesList.get(j).get(i).getPerimeter();
+        }
+        double mean = sum / trianglesList.size();
+
+        //Cal variance
+        double diffSum = 0;
+        for (int j = 0; j < trianglesList.size(); j++) {
+          diffSum += Math.abs(trianglesList.get(j).get(i).getPerimeter() - mean);
+        }
+        double variance = diffSum / trianglesList.size();
+
+        varTriangles.add(new com.pmntm.nhom4.facemeshdetection.db.Triangle(mean, variance));
+      }
+
+      showPopupWindow(varTriangles);
+      face = new Face(varTriangles);
+   }
+
+    return null;
   }
 
+  void showPopupWindow(List<com.pmntm.nhom4.facemeshdetection.db.Triangle> varTriangles)
+  {
+    View view = View.inflate(this.context, R.layout.popup_layout , null);
+
+    Button ok = view.findViewById(R.id.ok);
+    EditText nameEditText = view.findViewById(R.id.name);
+
+    int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+    int height = ViewGroup.LayoutParams.WRAP_CONTENT;
+    PopupWindow popupWindow = new PopupWindow(view, width, height, true);
+
+    ConstraintLayout parent =  (ConstraintLayout) ((Activity) context).findViewById(R.id.parent_layout);
+    popupWindow.showAtLocation(parent, Gravity.CENTER, 0, 0);
+    ok.setOnClickListener(v -> {
+      String name = nameEditText.getText().toString();
+
+      Face face1 = new Face(name, varTriangles);
+      faceHandler.addFace(face1);
+
+      ((Activity) context).startActivity(new Intent(context, LivePreviewActivity.class));
+    });
+
+  }
 
   double getPointsDistance(PointF3D point1, PointF3D point2) {
     float p1x = point1.getX();

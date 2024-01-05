@@ -17,7 +17,9 @@
     <string name="menu_item_settings" translatable="false">Settings</string>
     <string name="select_image" translatable="false">Select image</string>
     <string name="custom_object_detection" translatable="false">Custom Object Detector</string>
-
+    <string name="btn_new">+ New Face</string>
+    <string name="back">Back</string>
+    <string name="type_name">Type name ...</string>
     <!-- Settings related strings. -->
     <string name="pref_screen" translatable="false">ps</string>
     <string name="pref_screen_title_live_preview" translatable="false">Live preview settings</string>
