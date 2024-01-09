@@ -162,6 +162,16 @@ public class FaceMeshGraphic extends Graphic {
 //    List<FaceMeshPoint> points =
 //        useCase == USE_CASE_CONTOUR_ONLY ? getContourPoints(faceMesh) : faceMesh.getAllPoints();
     List<Triangle<FaceMeshPoint>> triangles = faceMesh.getAllTriangles();
+//    List<Triangle<FaceMeshPoint>> triangles = new ArrayList<>();
+//    for (int i = 0; i < trianglesz.size()/ 2; i++) {
+//      triangles.add(trianglesz.get(i));
+//    },
+
+//    List<FaceMeshPoint> allPoints = faceMesh.getAllPoints();
+//    FaceMeshPoint nose = allPoints.get(4);
+//    FaceMeshPoint left_lip = allPoints.get()
+//    triangles.add(new Triangle<>(allPoints.get(291), allPoints.get(61), allPoints.get(4)));
+
 
 //    zMin = Float.MAX_VALUE;
 //    zMax = Float.MIN_VALUE;

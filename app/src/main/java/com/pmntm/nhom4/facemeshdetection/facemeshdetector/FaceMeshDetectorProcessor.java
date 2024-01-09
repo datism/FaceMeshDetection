@@ -148,8 +148,11 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
     return dotProduct / (magnitudeVector1 * magnitudeVector2);
   }
 
-  public double getScore(double n1, double n2) {
-    return Math.min(n1,n2) / Math.max(n1,n2);
+  public double getScore(double t, double a) {
+    if (t > a) {
+      return a / t;
+    }
+    else return 1;
   }
 
 
