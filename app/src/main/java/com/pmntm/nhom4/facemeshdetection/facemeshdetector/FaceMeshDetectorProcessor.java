@@ -94,29 +94,58 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
       return null;
     }
 
-    // Get outline of face
-    List<FaceMeshPoint> faceOutline = faceMesh.getPoints(FaceMesh.FACE_OVAL);
+//    // Get outline of face
+//    List<FaceMeshPoint> faceOutline = faceMesh.getPoints(FaceMesh.FACE_OVAL);
+//
+//    // Calculate face perimeter
+//    double facePerimeter = 0;
+//    for (int i = 0; i < faceOutline.size() - 1; i++) {
+//      PointF3D point1 = faceOutline.get(i).getPosition();
+//      PointF3D point2 = faceOutline.get(i + 1).getPosition();
+//      facePerimeter += getPointsDistance(point1, point2);
+//    }
+//
+//    // Calculate perimeter ratio of each triangles to face
+//    List<Triangle<FaceMeshPoint>> triangles = faceMesh.getAllTriangles();
+//    List<Double> perimeterRatio = new ArrayList<>();
+//    for (Triangle<FaceMeshPoint> triangle : triangles) {
+//      double trianglePerimeter = getTrianglePerimeter(triangle);
+//      perimeterRatio.add(trianglePerimeter / facePerimeter);
+//    }
 
-    // Calculate face perimeter
-    double facePerimeter = 0;
-    for (int i = 0; i < faceOutline.size() - 1; i++) {
-      PointF3D point1 = faceOutline.get(i).getPosition();
-      PointF3D point2 = faceOutline.get(i + 1).getPosition();
-      facePerimeter += getPointsDistance(point1, point2);
-    }
+    List<Triangle<FaceMeshPoint>> triangles = new ArrayList<>();
+    List<FaceMeshPoint> allPoints = faceMesh.getAllPoints();
+    FaceMeshPoint nose = allPoints.get(4);
+    FaceMeshPoint left_lip = allPoints.get(61);
+    FaceMeshPoint right_lip = allPoints.get(291);
+    FaceMeshPoint left_left_eye = allPoints.get(33);
+    FaceMeshPoint right_left_eye = allPoints.get(133);
+    FaceMeshPoint left_right_eye = allPoints.get(362);
+    FaceMeshPoint right_right_eye = allPoints.get(263);
 
-    // Calculate perimeter ratio of each triangles to face
-    List<Triangle<FaceMeshPoint>> triangles = faceMesh.getAllTriangles();
-    List<Double> perimeterRatio = new ArrayList<>();
-    for (Triangle<FaceMeshPoint> triangle : triangles) {
-      double trianglePerimeter = getTrianglePerimeter(triangle);
-      perimeterRatio.add(trianglePerimeter / facePerimeter);
+    triangles.add(new Triangle<>(left_left_eye, right_left_eye, nose));
+    triangles.add(new Triangle<>(right_left_eye, left_right_eye, nose));
+    triangles.add(new Triangle<>(left_right_eye, right_right_eye, right_lip));
+    triangles.add(new Triangle<>(left_left_eye, nose, left_lip));
+    triangles.add(new Triangle<>(left_right_eye, nose, right_lip));
+    triangles.add(new Triangle<>(left_lip, nose, right_lip));
+
+    List<Double> vector = new ArrayList<>();
+    for (Triangle<FaceMeshPoint> triangle: triangles) {
+      List<FaceMeshPoint> points = triangle.getAllPoints();
+      double a = getPointsDistance(points.get(0), points.get(1));
+      double b = getPointsDistance(points.get(0), points.get(2));
+      double c = getPointsDistance(points.get(1), points.get(2));
+
+      vector.add(a/b);
+      vector.add(a/c);
+      vector.add(b/c);
     }
 
     // Calculate score of each face's vector to frame's vector
     List<Double> scores = new ArrayList<>();
     for (Face face : faceList) {
-      double dist = getEuclideanDistance(perimeterRatio, face.getPerimeterRatio());
+      double dist = getEuclideanDistance(vector, face.getVector());
       scores.add(getScore(dist, face.getAverageDistance()));
     }
 
@@ -179,24 +208,24 @@ public class FaceMeshDetectorProcessor extends VisionProcessorBase<List<FaceMesh
   }
 
 
-  double getPointsDistance(PointF3D point1, PointF3D point2) {
-    float p1x = point1.getX();
-    float p2x = point2.getX();
+  double getPointsDistance(FaceMeshPoint point1, FaceMeshPoint point2) {
+    float p1x = point1.getPosition().getX();
+    float p2x = point2.getPosition().getX();
 
-    float p1y = point1.getY();
-    float p2y = point2.getY();
+    float p1y = point1.getPosition().getY();
+    float p2y = point2.getPosition().getY();
 
-    float p1z = point1.getZ();
-    float p2z = point2.getZ();
+    float p1z = point1.getPosition().getZ();
+    float p2z = point2.getPosition().getZ();
 
     return Math.sqrt( Math.pow(p1x - p2x, 2) + Math.pow(p1y - p2y, 2) + Math.pow(p1z - p2z, 2));
   }
 
   double getTrianglePerimeter(Triangle<FaceMeshPoint> triangle) {
     List<FaceMeshPoint> faceMeshPoints = triangle.getAllPoints();
-    PointF3D point1 = faceMeshPoints.get(0).getPosition();
-    PointF3D point2 = faceMeshPoints.get(1).getPosition();
-    PointF3D point3 = faceMeshPoints.get(2).getPosition();
+    FaceMeshPoint point1 = faceMeshPoints.get(0);
+    FaceMeshPoint point2 = faceMeshPoints.get(1);
+    FaceMeshPoint point3 = faceMeshPoints.get(2);
 
     return getPointsDistance(point1, point2) + getPointsDistance(point2, point3) + getPointsDistance(point3, point1);
   }

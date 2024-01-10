@@ -28,7 +28,7 @@ public class FaceHandler extends SQLiteOpenHelper {
             FaceEntry.COLUMN_NAME + " TEXT," +
             FaceEntry.COLUMN_AVG_DIST + " REAL");
 
-    for(int i = 0; i < 898; i++) {
+    for(int i = 0; i < 18; i++) {
       sql_create.append(",").append('`').append(i).append('`').append(" REAL");
     }
 
@@ -66,7 +66,7 @@ public class FaceHandler extends SQLiteOpenHelper {
     values.put(FaceEntry.COLUMN_NAME, face.getName());
     values.put(FaceEntry.COLUMN_AVG_DIST, face.getAverageDistance());
 
-    List<Double> perimeterRatios = face.getPerimeterRatio();
+    List<Double> perimeterRatios = face.getVector();
     for (int i = 0; i < perimeterRatios.size(); i++) {
       values.put('`' + Integer.toString(i) + '`', perimeterRatios.get(i));
     }
@@ -93,14 +93,14 @@ public class FaceHandler extends SQLiteOpenHelper {
       String faceName = faceCursor.getString(faceCursor.getColumnIndexOrThrow(FaceEntry.COLUMN_NAME));
       double averageDist = faceCursor.getDouble(faceCursor.getColumnIndexOrThrow(FaceEntry.COLUMN_AVG_DIST));
 
-      List<Double> perimeterRatios = new ArrayList<>();
-      for(int i = 0; i < 898; i++) {
-        perimeterRatios.add(faceCursor.getDouble(
+      List<Double> vector = new ArrayList<>();
+      for(int i = 0; i < 18; i++) {
+        vector.add(faceCursor.getDouble(
                 faceCursor.getColumnIndexOrThrow(Integer.toString(i))
         ));
       }
 
-      faces.add(new Face(faceName, averageDist, perimeterRatios));
+      faces.add(new Face(faceName, averageDist, vector));
     }
 
     faceCursor.close();

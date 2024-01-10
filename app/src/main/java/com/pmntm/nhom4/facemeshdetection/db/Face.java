@@ -5,12 +5,12 @@ import java.util.List;
 public class Face {
   String name;
   double averageDistance;
-  List<Double> perimeterRatio;
+  List<Double> vector;
 
-  public Face(String name, double averageDistance, List<Double> perimeterRatio) {
+  public Face(String name, double averageDistance, List<Double> vector) {
     this.name = name;
     this.averageDistance = averageDistance;
-    this.perimeterRatio = perimeterRatio;
+    this.vector = vector;
   }
 
   public String getName() {
@@ -29,11 +29,11 @@ public class Face {
     this.averageDistance = averageDistance;
   }
 
-  public List<Double> getPerimeterRatio() {
-    return perimeterRatio;
+  public List<Double> getVector() {
+    return vector;
   }
 
-  public void setPerimeterRatio(List<Double> perimeterRatio) {
-    this.perimeterRatio = perimeterRatio;
+  public void setVector(List<Double> vector) {
+    this.vector = vector;
   }
 }

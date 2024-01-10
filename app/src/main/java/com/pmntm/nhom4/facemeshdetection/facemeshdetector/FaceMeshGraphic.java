@@ -39,6 +39,7 @@ import com.google.mlkit.vision.facemesh.FaceMeshPoint;
 
 import com.pmntm.nhom4.facemeshdetection.GraphicOverlay;
 import com.pmntm.nhom4.facemeshdetection.GraphicOverlay.Graphic;
+import com.pmntm.nhom4.facemeshdetection.db.Face;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +92,7 @@ public class FaceMeshGraphic extends Graphic {
 
     positionPaint = new Paint();
     positionPaint.setColor(selectedColor);
+    positionPaint.setStrokeWidth(BOX_STROKE_WIDTH);
 
     boxPaint = new Paint();
     boxPaint.setColor(selectedColor);
@@ -161,16 +163,29 @@ public class FaceMeshGraphic extends Graphic {
     // Draw face mesh
 //    List<FaceMeshPoint> points =
 //        useCase == USE_CASE_CONTOUR_ONLY ? getContourPoints(faceMesh) : faceMesh.getAllPoints();
-    List<Triangle<FaceMeshPoint>> triangles = faceMesh.getAllTriangles();
+//    List<Triangle<FaceMeshPoint>> triangles = faceMesh.getAllTriangles();
 //    List<Triangle<FaceMeshPoint>> triangles = new ArrayList<>();
 //    for (int i = 0; i < trianglesz.size()/ 2; i++) {
 //      triangles.add(trianglesz.get(i));
 //    },
 
-//    List<FaceMeshPoint> allPoints = faceMesh.getAllPoints();
-//    FaceMeshPoint nose = allPoints.get(4);
-//    FaceMeshPoint left_lip = allPoints.get()
-//    triangles.add(new Triangle<>(allPoints.get(291), allPoints.get(61), allPoints.get(4)));
+
+    List<Triangle<FaceMeshPoint>> triangles = new ArrayList<>();
+    List<FaceMeshPoint> allPoints = faceMesh.getAllPoints();
+    FaceMeshPoint nose = allPoints.get(4);
+    FaceMeshPoint left_lip = allPoints.get(61);
+    FaceMeshPoint right_lip = allPoints.get(291);
+    FaceMeshPoint left_left_eye = allPoints.get(33);
+    FaceMeshPoint right_left_eye = allPoints.get(133);
+    FaceMeshPoint left_right_eye = allPoints.get(362);
+    FaceMeshPoint right_right_eye = allPoints.get(263);
+
+    triangles.add(new Triangle<>(left_left_eye, right_left_eye, nose));
+    triangles.add(new Triangle<>(right_left_eye, left_right_eye, nose));
+    triangles.add(new Triangle<>(left_right_eye, right_right_eye, right_lip));
+    triangles.add(new Triangle<>(left_left_eye, nose, left_lip));
+    triangles.add(new Triangle<>(left_right_eye, nose, right_lip));
+    triangles.add(new Triangle<>(left_lip, nose, right_lip));
 
 
 //    zMin = Float.MAX_VALUE;
